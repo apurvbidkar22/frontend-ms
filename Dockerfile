@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --no-audit --no-fund
 COPY . .
-RUN npm run build
+RUN npm ci --no-audit --no-fund
 
 # -------- Runtime stage --------
 FROM nginxinc/nginx-unprivileged:stable-alpine
