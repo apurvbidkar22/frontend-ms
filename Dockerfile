@@ -1,0 +1,26 @@
+# -------- Build stage --------
+FROM node:20-alpine AS build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# -------- Runtime stage --------
+FROM nginxinc/nginx-unprivileged:stable-alpine
+
+# Copy built frontend
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Replace default nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Fix permissions for OpenShift random UID
+RUN chgrp -R 0 /usr/share/nginx/html /var/cache/nginx /var/run && \
+    chmod -R g=u /usr/share/nginx/html /var/cache/nginx /var/run
+
+EXPOSE 8080
+
+# nginx-unprivileged already runs as non-root
+CMD ["nginx", "-g", "daemon off;"]
